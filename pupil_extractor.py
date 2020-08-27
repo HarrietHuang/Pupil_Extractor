@@ -13,6 +13,7 @@ from scipy.stats import gaussian_kde
 
 def pad_images_to_same_size(images):
     """
+    根據該路徑下的照片中 最大的照片全部調整成一樣的大小
     :param images: sequence of images
     :return: list of images padded so that all images have same width and height (max width and height are used)
     """
@@ -38,7 +39,11 @@ def pad_images_to_same_size(images):
 
     return images_padded
 
-def extract_puil(img_path):
+def extract_puil(img_path, which_area = -2, im_size = 300):
+    '''
+    which_area: 是一個list 的index，list裡面放的是框出來由小到大的面積區塊 要讓這個框出虹膜，通常最大的是背景 因此使用倒數第二個
+    im_size: 切出眼睛的區塊大小
+    '''
       img = cv2.imread(img_path)
       # 使用縮圖以減少計算量
       if  os.path.isfile(img_path):
@@ -130,9 +135,15 @@ def extract_puil(img_path):
         # if len(c) ==2 :
         #   c = c[0]
         # elif len(c) ==3:
-        #### need to be modify
+
+        '''
+        c這個list會存 框出來由小到大的面積區塊 要讓這個框出瞳孔
+        need to be modified
+        #通常最大的是背景 因此使用倒數第二個
+        '''
+
         # print(len(c))
-        c = c[-2]
+        c = c[which_area]
 
         # 找出可以包住面積最大等高線區域的方框，並以綠色線條畫出來
         x, y, w, h = cv2.boundingRect(c)
@@ -183,7 +194,7 @@ def extract_puil(img_path):
         # 裁切影像
         #need to be modify the range
         img_crop = rotated[x_min:x_max, y_min:y_max]
-        img_final = img_final[x_min-150:x_max+150, y_min-150:y_max+150]
+        img_final = img_final[x_min-im_size//2:x_max+im_size//2, y_min-im_size//2:y_max+im_size//2]
         # img_final = cv2.resize(img_final, dsize=(500, 500), interpolation=cv2.INTER_CUBIC)
         cv2.imwrite(img_path, img_final)
         return img_final
@@ -199,8 +210,9 @@ def extract_puil(img_path):
 
         ## image padding
 
-for sub in os.listdir(r"C:\Users\admin\Downloads\1243"):
-    sub_path = os.path.join(r"C:\Users\admin\Downloads\1243",sub)
+file_path = r''
+for sub in os.listdir(file_path):
+    sub_path = os.path.join(file_path, sub)
     imges=[]
     imges_name=[]
     for f in os.listdir(sub_path):
@@ -209,9 +221,6 @@ for sub in os.listdir(r"C:\Users\admin\Downloads\1243"):
 
             img_path = os.path.join(sub_path, f)
             img_final = extract_puil(img_path)
-            ###
-            # img_final = cv2.imread(img_path)
-            ###
             imges.append(img_final)
             imges_name.append(img_path)
     pad_imges = pad_images_to_same_size(imges)
